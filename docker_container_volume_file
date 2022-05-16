@@ -1,0 +1,142 @@
+COMANDOS DOCKER --> BASEADO NO "DESCOMPLICANDO DOCKER" Linux Tips
+
+EXECUÇÃO
+
+ps ou docker container ls --> Lista todos os containers em execução
+container ls -a --> Lista todos os container já criados que estão em execução ou não
+container run --> Executa o container
+container run -ti --> Executa porém com interação com o container (Acesso ao teclado)
+	Adicionando um --name [nome do container], atribui um nome ao container.
+container run -d --> Executa o container em modo deamon, ou seja, sem interatividade
+CTRL P + Q --> Sai do container sem mata-ló
+container attach --> Faz um join no container , porém se for modo deamon possa ser que entre apenas no processo
+container exec -ti [CONTAINER ID] [COMANDO] --> Irá executar algum comando dentro do container sem precisar attach
+	Tambem é usado para entrar em container no modo deamon,exemplo do nginx:
+	docker container exec -ti [NGINX ID] bash --> Irá chamar o bash dentro do nginx.
+container start/stop/pause/restart/unpause --> Autoexplicativos
+container inspect --> Serve para mostrar todos os detalhes de serviços e subserviços
+container logs -f --> mostra os logs de serviço dentro do container
+
+ADM E CONFIG CONTAINER
+
+container stats --> Mostra CPU/MEM/NET/PIDS
+container top --> Exibe os processos que estão rodando no container
+container update --> alterar alguma configuração do container
+			CPU --> --cpus 0.5
+			MEMORY --> --memory 64M
+
+
+VOLUMES
+
+Tipos Bind e Volume
+Bind --> o seu src é uma pasta específica qualquer
+container run -ti --mount type=bind,src=/desktop,dst=/desktop [imagem]
+	src=localização do dir principal
+	dst= destindo para dentro do container
+
+Volume --> É criado um volume específico pelo docker e fica armazenado em /var/lib/docker/volumes/[nome do volume/_data/
+volume create [nome] --> crir
+volume inspect [nome] --> mostra todas as caracteriiscas inclusive o diretorio principal
+container run -ti --mount type=volume,src=[nome do volume],dst=/[pasta] [imagem]]
+	BACKUP :
+	docker run -ti --mount type=volume,src=dbdados,dst=/data --mount type=bind,src=/backup,dst=/backup debian tar -cvf /backup/backup.tar /data
+	o container está criando 2 volumes , um pegando os dados do volume dbdados o outro do tipo bind vazio com o src=/backup
+	Após isso ele está fazendo uma copia compactada dentro do container dos arquivos da pasta /data para /backup, consecutivamente
+	irá salvar no bind setado.
+
+
+DOCKER FILE (IMAGENS)
+
+docker image build -t [nome:1.0.0] .  --> vai buildar uma imagem baseado no "Dockerfile" da pasta que está no momento
+	SEMPRE CRIAR UM ARQUIVO DOCKER FILE COM O NOME : "Dockerfile"
+docker image ls --> lista imagens
+	Exemplo de Dockerfile:
+		FROM debian --> indica a imagem a ser baseada
+		LABEL app="Giropops" --> nome da imagem
+		ENV VAR="VARIAVEL" --> variavel de ambiente
+		RUN apt-get update && apt-get install -y stress && apt-get clean -->comando a ser executado no bash após o docker run (DURANTE O BUILD)
+			Normalmente são installs e updates de sistema
+			Pode-ser usar mais de um RUN , porém um RUN não tem acesso a continuidade do outro ,pois, criam outras camadas.
+		VOLUME /var/Lucas/ --> Criar automaticamente volume para isso, porém aleatorio
+		EXPOSE 80 --> porta para bindar, pois ela está em execução 
+ 		CMD echo"Lucas" --> Processo que ele irá executar após montar o container.
+ 		USER lucas --> Seleciona o usuario por default irá ir pra o root
+ 		WORKDIR /var/www/html --> Seleciona a pasta default do container (onde irá começar ao attach)
+ 		ENTRYPOINT --> Processo principal, caso ele morra o container vai junto
+ 		CMD --> Quando existe um ENTRYPOINT o comando CMD apenas define parametros após o entrypoint.
+ 		ADD => Copia novos arquivos, diretórios, arquivos TAR ou arquivos remotos e os adicionam ao filesystem do container;
+
+CMD => Executa um comando, diferente do RUN que executa o comando no momento em que está "buildando" a imagem, o CMD executa no início da execução do container;
+
+LABEL => Adiciona metadados a imagem como versão, descrição e fabricante;
+
+COPY => Copia novos arquivos e diretórios e os adicionam ao filesystem do container;
+
+ENTRYPOINT => Permite você configurar um container para rodar um executável, e quando esse executável for finalizado, o container também será;
+
+ENV => Informa variáveis de ambiente ao container;
+
+EXPOSE => Informa qual porta o container estará ouvindo;
+
+FROM => Indica qual imagem será utilizada como base, ela precisa ser a primeira linha do Dockerfile;
+
+MAINTAINER => Autor da imagem; 
+
+RUN => Executa qualquer comando em uma nova camada no topo da imagem e "commita" as alterações. Essas alterações você poderá utilizar nas próximas instruções de seu Dockerfile;
+
+USER => Determina qual o usuário será utilizado na imagem. Por default é o root;
+
+VOLUME => Permite a criação de um ponto de montagem no container;
+
+WORKDIR => Responsável por mudar do diretório / (raiz) para o especificado nele;
+  	
+ 		  	
+ 		  	
+ 		  	
+ 		  	
+ 		  	
+ 		  	
+docker container run -d -p [Externa:interna] [imagem] --> para bindar portars exemplo -> 8080:80 (APACHE)
+docker image tag [image id] nome --> mudar tag de uma imagem ja buildada
+
+docker commit -m "mensagem" -t "tag" [id container] --> transforma container em imagem (tudo q foi instalado continua na imagem)
+
+MULTILINE IMAGE
+
+RUN apt-get update && \
+apt-get install vim && \
+a pt-get install python3
+
+	OU
+'' apt-get update && \
+apt-get install -y vim\
+ python
+ git
+
+MULTISTAGE
+
+Chamar uma imagem dentro , exemplo:
+	FROM golang
+	RUN compilar arquivo go
+	VOLUME salva arquivo compilado
+	FROM Ubuntu
+	RUN pega arquivo já compilado e roda ./arquivo.go
+	-->Apenas o ultimo from será utilizado.
+	-->Serve normalmente para dimuir o tamanho final da imagem
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
